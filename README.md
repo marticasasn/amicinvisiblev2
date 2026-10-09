@@ -4,7 +4,7 @@ A tiny Secret Santa web app in plain HTML. Available in Catalan (`index.html`) a
 
 <!-- TODO: add a screenshot or GIF here, e.g. ![Screenshot](docs/screenshot.png) -->
 
-<!-- TODO: add live demo link here, e.g. **Live demo:** https://... -->
+**Live demo:** https://amicinvisiblev2.netlify.app/
 
 ## How it works
 

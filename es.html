@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Amigo Invisible Online</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f4f7;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 16px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 820px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      padding: 20px;
+    }
+
+    h1 {
+      margin-top: 0;
+      text-align: center;
+      font-size: 1.7rem;
+    }
+
+    .lang-switch {
+      text-align: right;
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+    }
+
+    .lang-switch a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #555;
+      margin-bottom: 18px;
+      font-size: 0.95rem;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 150px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 0.95rem;
+      resize: vertical;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37,99,235,0.25);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.95rem;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 9px 16px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
+      white-space: nowrap;
+    }
+
+    button:active {
+      transform: scale(0.97);
+      box-shadow: none;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+      box-shadow: 0 5px 15px rgba(37,99,235,0.35);
+    }
+
+    .btn-primary:disabled {
+      background: #9ca3af;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #d1d5db;
+      color: #111827;
+    }
+
+    .hint {
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+
+    .links-section {
+      margin-top: 22px;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 16px;
+    }
+
+    .links-section h2 {
+      margin-top: 0;
+      font-size: 1.1rem;
+    }
+
+    .link-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .link-name {
+      min-width: 80px;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .link-input {
+      flex: 1 1 180px;
+      padding: 6px 8px;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      font-size: 0.85rem;
+    }
+
+    .link-input:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+    }
+
+    .small-note {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    /* VISTA JUGADOR */
+    #playerView h2 {
+      text-align: center;
+      font-size: 1.3rem;
+      margin-bottom: 6px;
+    }
+
+    #playerView p {
+      text-align: center;
+      font-size: 0.95rem;
+    }
+
+    #playerName {
+      font-weight: 700;
+    }
+
+    #playerError {
+      margin-top: 10px;
+      color: #b91c1c;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.55);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      padding: 20px 22px;
+      border-radius: 16px;
+      max-width: 360px;
+      width: 100%;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+      text-align: center;
+      animation: pop 0.15s ease-out;
+    }
+
+    .modal h2 {
+      margin-top: 0;
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+    }
+
+    .modal p {
+      margin: 0 0 14px;
+      font-size: 1rem;
+    }
+
+    .receiver-name {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-top: 6px;
+    }
+
+    @keyframes pop {
+      from {
+        transform: scale(0.9);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .app {
+        padding: 15px;
+      }
+
+      .link-row {
+        align-items: stretch;
+      }
+
+      .link-input {
+        flex-basis: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- VISTA ORGANIZADOR -->
+  <div class="app" id="organizerView" style="display:none;">
+    <div class="lang-switch"><a class="lang-link" href="index.html" lang="ca">Català</a></div>
+    <h1>Amigo Invisible Online</h1>
+    <p class="subtitle">
+      Escribe los nombres, sortea y envía a cada persona su enlace privado.
+      Cuando abran su enlace verán solo su amigo invisible.
+    </p>
+
+    <section>
+      <label for="namesInput"><strong>Nombres de los participantes</strong></label>
+      <textarea id="namesInput" placeholder="Pon un nombre por línea&#10;Ejemplo:&#10;Ana&#10;Luis&#10;Marta&#10;Carlos"></textarea>
+      <div class="buttons">
+        <button id="drawButton" class="btn-primary">Sortear y generar enlaces</button>
+        <button id="clearButton" class="btn-secondary" type="button">Limpiar</button>
+      </div>
+      <p class="hint">
+        ✔ Mínimo 2 personas. Nadie se toca a sí mismo, el reparto es aleatorio.<br>
+        ✔ Luego copia cada enlace y mándalo por WhatsApp, Telegram, etc.
+      </p>
+    </section>
+
+    <section class="links-section" id="linksSection" style="display:none;">
+      <h2>Enlaces privados</h2>
+      <p class="hint">
+        Envía a cada persona <strong>solo su enlace</strong>. Al abrirlo verán en un pop-up a quién le hacen el regalo.
+      </p>
+      <div id="linksContainer"></div>
+      <p class="small-note">
+        Si cambias de idea, puedes volver arriba, modificar los nombres y hacer un nuevo sorteo.
+      </p>
+    </section>
+  </div>
+
+  <!-- VISTA JUGADOR -->
+  <div class="app" id="playerView" style="display:none;">
+    <div class="lang-switch"><a class="lang-link" href="index.html" lang="ca">Català</a></div>
+    <h2>Amigo Invisible</h2>
+    <p>
+      Hola <span id="playerName"></span> 👋<br>
+      Pulsa el botón para ver a quién te ha tocado.
+    </p>
+    <div class="buttons" style="justify-content:center; margin-top: 16px;">
+      <button id="showAssignmentButton" class="btn-primary" type="button">
+        Ver quién me ha tocado
+      </button>
+    </div>
+    <p class="hint" style="text-align:center; margin-top: 10px;">
+      Asegúrate de que estás tú solo mirando la pantalla 😉
+    </p>
+    <p id="playerError"></p>
+  </div>
+
+  <!-- Modal compartido -->
+  <div id="modalBackdrop" class="modal-backdrop">
+    <div class="modal">
+      <h2>¡Este es tu amigo invisible!</h2>
+      <p id="modalText"></p>
+      <div class="buttons" style="justify-content:center; margin-top: 10px;">
+        <button id="closeModalButton" class="btn-primary" type="button">
+          Cerrar (no se lo enseñes 😜)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- Utilidades base64 para soportar acentos ----------
+    function toBase64(str) {
+      const utf8 = new TextEncoder().encode(str);
+      let binary = '';
+      utf8.forEach(b => binary += String.fromCharCode(b));
+      return btoa(binary);
+    }
+
+    function fromBase64(b64) {
+      const binary = atob(b64);
+      const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
+    }
+
+    // ---------- Lógica sorteo ----------
+    function parseNames(text) {
+      return text
+        .split('\n')
+        .map(n => n.trim().replace(/\s+/g, ' '))
+        .filter(n => n.length > 0);
+    }
+
+    function findDuplicates(names) {
+      const seen = new Set();
+      const duplicates = new Set();
+      names.forEach(name => {
+        const key = name.toLocaleLowerCase();
+        if (seen.has(key)) duplicates.add(name);
+        seen.add(key);
+      });
+      return [...duplicates];
+    }
+
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function generateDerangement(arr) {
+      if (arr.length < 2) return null;
+
+      let shuffled;
+      let tries = 0;
+      const maxTries = 1000;
+
+      do {
+        shuffled = shuffleArray(arr);
+        tries++;
+        const hasFixed = arr.some((name, i) => name === shuffled[i]);
+        if (!hasFixed) return shuffled;
+      } while (tries < maxTries);
+
+      return null;
+    }
+
+    // Cada enlace solo lleva el nombre y su receptor, no el sorteo entero
+    function buildPlayerUrl(baseUrl, name, receiver) {
+      return baseUrl +
+        '?n=' + encodeURIComponent(name) +
+        '&r=' + encodeURIComponent(toBase64(receiver));
+    }
+
+    // ---------- Referencias DOM comunes ----------
+    const organizerView = document.getElementById('organizerView');
+    const playerView = document.getElementById('playerView');
+
+    const namesInput = document.getElementById('namesInput');
+    const drawButton = document.getElementById('drawButton');
+    const clearButton = document.getElementById('clearButton');
+    const linksSection = document.getElementById('linksSection');
+    const linksContainer = document.getElementById('linksContainer');
+
+    const playerNameSpan = document.getElementById('playerName');
+    const showAssignmentButton = document.getElementById('showAssignmentButton');
+    const playerError = document.getElementById('playerError');
+
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalText = document.getElementById('modalText');
+    const closeModalButton = document.getElementById('closeModalButton');
+
+    let currentAssignments = null;
+    let currentPlayerName = null;
+    let currentReceiver = null;
+
+    // ---------- Modo organizador ----------
+    function getNamesFromInput() {
+      return parseNames(namesInput.value);
+    }
+
+    function handleDraw() {
+      const names = getNamesFromInput();
+
+      if (names.length < 2) {
+        alert('Necesitas al menos 2 participantes.');
+        return;
+      }
+
+      const duplicates = findDuplicates(names);
+      if (duplicates.length > 0) {
+        alert('Hay nombres repetidos: ' + duplicates.join(', ') + '. Cada participante debe tener un nombre distinto (puedes añadir una inicial).');
+        return;
+      }
+
+      const derangement = generateDerangement(names);
+      if (!derangement) {
+        alert('No se ha podido generar un sorteo válido. Inténtalo otra vez.');
+        return;
+      }
+
+      const assignments = {};
+      names.forEach((name, i) => {
+        assignments[name] = derangement[i];
+      });
+      currentAssignments = assignments;
+
+      renderLinks(names, assignments);
+    }
+
+    function renderLinks(names, assignments) {
+      linksContainer.replaceChildren();
+      linksSection.style.display = 'block';
+
+      const baseUrl = window.location.origin + window.location.pathname;
+
+      names.forEach(name => {
+        const url = buildPlayerUrl(baseUrl, name, assignments[name]);
+
+        const row = document.createElement('div');
+        row.className = 'link-row';
+
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'link-name';
+        nameDiv.textContent = name;
+
+        const input = document.createElement('input');
+        input.className = 'link-input';
+        input.type = 'text';
+        input.readOnly = true;
+        input.value = url;
+        input.addEventListener('focus', () => input.select());
+
+        const btn = document.createElement('button');
+        btn.className = 'btn-outline';
+        btn.type = 'button';
+        btn.textContent = 'Copiar';
+
+        btn.addEventListener('click', async () => {
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(url);
+              btn.textContent = 'Copiado';
+              setTimeout(() => { btn.textContent = 'Copiar'; }, 1500);
+            } else {
+              input.select();
+              alert('Selecciona y copia el enlace desde el cuadro de texto.');
+            }
+          } catch (e) {
+            input.select();
+            alert('Selecciona y copia el enlace desde el cuadro de texto.');
+          }
+        });
+
+        row.appendChild(nameDiv);
+        row.appendChild(input);
+        row.appendChild(btn);
+        linksContainer.appendChild(row);
+      });
+    }
+
+    function resetOrganizer() {
+      namesInput.value = '';
+      linksContainer.replaceChildren();
+      linksSection.style.display = 'none';
+      currentAssignments = null;
+    }
+
+    // ---------- Modo jugador ----------
+    function initPlayerMode(playerName, receiver) {
+      currentPlayerName = playerName;
+      currentReceiver = receiver;
+
+      playerNameSpan.textContent = playerName;
+      playerError.textContent = '';
+
+      showAssignmentButton.addEventListener('click', handleShowAssignment);
+    }
+
+    function handleShowAssignment() {
+      if (!currentPlayerName || !currentReceiver) {
+        playerError.textContent = 'Ha habido un problema con el enlace. Pide un enlace nuevo al organizador.';
+        return;
+      }
+
+      const nameEl = document.createElement('strong');
+      nameEl.textContent = currentPlayerName;
+      const receiverEl = document.createElement('span');
+      receiverEl.className = 'receiver-name';
+      receiverEl.textContent = currentReceiver;
+
+      modalText.replaceChildren(
+        nameEl, ', te ha tocado hacer el regalo a:',
+        document.createElement('br'),
+        receiverEl
+      );
+      modalBackdrop.classList.add('show');
+    }
+
+    function closeModal() {
+      modalBackdrop.classList.remove('show');
+    }
+
+    // ---------- Inicialización según URL ----------
+    function init() {
+      const params = new URLSearchParams(window.location.search);
+      const nameParam = params.get('n');
+      const receiverParam = params.get('r');
+
+      // El enlace de idioma conserva el sorteo de la URL
+      document.querySelectorAll('.lang-link').forEach(a => {
+        a.href = a.getAttribute('href') + window.location.search;
+      });
+
+      if (nameParam && receiverParam) {
+        // MODO JUGADOR
+        organizerView.style.display = 'none';
+        playerView.style.display = 'block';
+
+        try {
+          const playerName = nameParam; // URLSearchParams ya lo decodifica
+          const receiver = fromBase64(receiverParam).trim();
+
+          if (!receiver) {
+            playerError.textContent = 'Este enlace no es válido. Pide al organizador que te envíe de nuevo tu enlace.';
+            return;
+          }
+
+          initPlayerMode(playerName, receiver);
+        } catch (e) {
+          playerError.textContent = 'No se ha podido leer la información del sorteo. Pide un enlace nuevo.';
+        }
+      } else {
+        // MODO ORGANIZADOR
+        organizerView.style.display = 'block';
+        playerView.style.display = 'none';
+
+        drawButton.addEventListener('click', handleDraw);
+        clearButton.addEventListener('click', resetOrganizer);
+      }
+
+      closeModalButton.addEventListener('click', closeModal);
+      modalBackdrop.addEventListener('click', (e) => {
+        if (e.target === modalBackdrop) closeModal();
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

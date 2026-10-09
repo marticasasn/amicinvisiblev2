@@ -35,6 +35,17 @@
       font-size: 1.7rem;
     }
 
+    .lang-switch {
+      text-align: right;
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+    }
+
+    .lang-switch a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+
     .subtitle {
       text-align: center;
       color: #555;
@@ -255,6 +266,7 @@
 <body>
   <!-- VISTA ORGANITZADOR -->
   <div class="app" id="organizerView" style="display:none;">
+    <div class="lang-switch"><a class="lang-link" href="es.html" lang="es">Castellano</a></div>
     <h1>Amic Invisible Online</h1>
     <p class="subtitle">
       Escriu els noms, fes el sorteig i envia a cada persona el seu enllaç privat.
@@ -288,6 +300,7 @@
 
   <!-- VISTA JUGADOR -->
   <div class="app" id="playerView" style="display:none;">
+    <div class="lang-switch"><a class="lang-link" href="es.html" lang="es">Castellano</a></div>
     <h2>Amic Invisible</h2>
     <p>
       Hola <span id="playerName"></span> 👋<br>
@@ -332,17 +345,25 @@
       return new TextDecoder().decode(bytes);
     }
 
-    function encodeAssignments(assignments) {
-      const json = JSON.stringify(assignments);
-      return toBase64(json);
-    }
-
-    function decodeAssignments(b64) {
-      const json = fromBase64(b64);
-      return JSON.parse(json);
-    }
-
     // ---------- Lògica sorteig ----------
+    function parseNames(text) {
+      return text
+        .split('\n')
+        .map(n => n.trim().replace(/\s+/g, ' '))
+        .filter(n => n.length > 0);
+    }
+
+    function findDuplicates(names) {
+      const seen = new Set();
+      const duplicates = new Set();
+      names.forEach(name => {
+        const key = name.toLocaleLowerCase();
+        if (seen.has(key)) duplicates.add(name);
+        seen.add(key);
+      });
+      return [...duplicates];
+    }
+
     function shuffleArray(array) {
       const arr = [...array];
       for (let i = arr.length - 1; i > 0; i--) {
@@ -369,6 +390,13 @@
       return null;
     }
 
+    // Cada enllaç només porta el nom i el seu receptor, no el sorteig sencer
+    function buildPlayerUrl(baseUrl, name, receiver) {
+      return baseUrl +
+        '?n=' + encodeURIComponent(name) +
+        '&r=' + encodeURIComponent(toBase64(receiver));
+    }
+
     // ---------- Referències DOM comunes ----------
     const organizerView = document.getElementById('organizerView');
     const playerView = document.getElementById('playerView');
@@ -389,13 +417,11 @@
 
     let currentAssignments = null;
     let currentPlayerName = null;
+    let currentReceiver = null;
 
     // ---------- Mode organitzador ----------
     function getNamesFromInput() {
-      return namesInput.value
-        .split('\n')
-        .map(n => n.trim())
-        .filter(n => n.length > 0);
+      return parseNames(namesInput.value);
     }
 
     function handleDraw() {
@@ -403,6 +429,12 @@
 
       if (names.length < 2) {
         alert("Necessites com a mínim 2 participants.");
+        return;
+      }
+
+      const duplicates = findDuplicates(names);
+      if (duplicates.length > 0) {
+        alert("Hi ha noms repetits: " + duplicates.join(', ') + ". Cada participant ha de tenir un nom diferent (pots afegir-hi una inicial).");
         return;
       }
 
@@ -418,20 +450,17 @@
       });
       currentAssignments = assignments;
 
-      const encoded = encodeAssignments(assignments);
-      renderLinks(names, encoded);
+      renderLinks(names, assignments);
     }
 
-    function renderLinks(names, encodedAssignments) {
-      linksContainer.innerHTML = '';
+    function renderLinks(names, assignments) {
+      linksContainer.replaceChildren();
       linksSection.style.display = 'block';
 
       const baseUrl = window.location.origin + window.location.pathname;
 
       names.forEach(name => {
-        const url = baseUrl +
-          '?data=' + encodeURIComponent(encodedAssignments) +
-          '&name=' + encodeURIComponent(name);
+        const url = buildPlayerUrl(baseUrl, name, assignments[name]);
 
         const row = document.createElement('div');
         row.className = 'link-row';
@@ -477,37 +506,39 @@
 
     function resetOrganizer() {
       namesInput.value = '';
-      linksContainer.innerHTML = '';
+      linksContainer.replaceChildren();
       linksSection.style.display = 'none';
       currentAssignments = null;
     }
 
     // ---------- Mode jugador ----------
-    function initPlayerMode(assignments, playerName) {
-      currentAssignments = assignments;
+    function initPlayerMode(playerName, receiver) {
       currentPlayerName = playerName;
+      currentReceiver = receiver;
 
       playerNameSpan.textContent = playerName;
       playerError.textContent = '';
 
-      showAssignmentButton.addEventListener('click', handleShowAssignment, { once: true });
+      showAssignmentButton.addEventListener('click', handleShowAssignment);
     }
 
     function handleShowAssignment() {
-      if (!currentAssignments || !currentPlayerName) {
+      if (!currentPlayerName || !currentReceiver) {
         playerError.textContent = "Hi ha hagut un problema amb l'enllaç. Demana un enllaç nou a l'organitzador.";
         return;
       }
-      const receiver = currentAssignments[currentPlayerName];
-      if (!receiver) {
-        playerError.textContent = "Aquest enllaç no és vàlid per a cap participant. Revisa que sigui l'enllaç correcte.";
-        return;
-      }
 
-      modalText.innerHTML = `
-        <strong>${currentPlayerName}</strong>, t'ha tocat fer el regal a:<br>
-        <span class="receiver-name">${receiver}</span>
-      `;
+      const nameEl = document.createElement('strong');
+      nameEl.textContent = currentPlayerName;
+      const receiverEl = document.createElement('span');
+      receiverEl.className = 'receiver-name';
+      receiverEl.textContent = currentReceiver;
+
+      modalText.replaceChildren(
+        nameEl, ", t'ha tocat fer el regal a:",
+        document.createElement('br'),
+        receiverEl
+      );
       modalBackdrop.classList.add('show');
     }
 
@@ -518,24 +549,29 @@
     // ---------- Inicialització segons URL ----------
     function init() {
       const params = new URLSearchParams(window.location.search);
-      const dataParam = params.get('data');
-      const nameParam = params.get('name');
+      const nameParam = params.get('n');
+      const receiverParam = params.get('r');
 
-      if (dataParam && nameParam) {
+      // L'enllaç d'idioma conserva el sorteig de l'URL
+      document.querySelectorAll('.lang-link').forEach(a => {
+        a.href = a.getAttribute('href') + window.location.search;
+      });
+
+      if (nameParam && receiverParam) {
         // MODE JUGADOR
         organizerView.style.display = 'none';
         playerView.style.display = 'block';
 
         try {
-          const assignments = decodeAssignments(dataParam);
           const playerName = nameParam; // URLSearchParams ja el decodifica
+          const receiver = fromBase64(receiverParam).trim();
 
-          if (!assignments || typeof assignments !== 'object' || !assignments[playerName]) {
+          if (!receiver) {
             playerError.textContent = "Aquest enllaç no és vàlid. Demana a l'organitzador que t'enviï de nou el teu enllaç.";
             return;
           }
 
-          initPlayerMode(assignments, playerName);
+          initPlayerMode(playerName, receiver);
         } catch (e) {
           playerError.textContent = "No s'ha pogut llegir la informació del sorteig. Demana un enllaç nou.";
         }
